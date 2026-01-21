@@ -1,0 +1,78 @@
+name: Generate Folder with Gradle
+
+on:
+  workflow_dispatch:
+    inputs:
+      folder_name:
+        description: 'Name of the folder to generate'
+        required: true
+        default: 'generated-output'
+      gradle_task:
+        description: 'Gradle task to execute'
+        required: true
+        default: 'generateFolder'
+  push:
+    branches: [ main, master ]
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  generate-folder:
+    name: Generate Folder via Gradle
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run Gradle task to generate folder
+        run: |
+          ./gradlew ${{ github.event.inputs.gradle_task || 'generateFolder' }} \
+            -PfolderName=${{ github.event.inputs.folder_name || 'generated-output' }} \
+            --stacktrace
+
+      - name: Verify folder creation
+        run: |
+          FOLDER_NAME="${{ github.event.inputs.folder_name || 'generated-output' }}"
+          if [ -d "$FOLDER_NAME" ]; then
+            echo "✅ Folder created successfully"
+            echo "Contents:"
+            ls -la "$FOLDER_NAME"
+          else
+            echo "❌ Folder not found"
+            exit 1
+          fi
+
+      - name: Show folder structure
+        run: |
+          FOLDER_NAME="${{ github.event.inputs.folder_name || 'generated-output' }}"
+          echo "📁 Complete folder structure:"
+          find "$FOLDER_NAME" -type f -o -type d
+
+      - name: Create summary
+        if: always()
+        run: |
+          FOLDER_NAME="${{ github.event.inputs.folder_name || 'generated-output' }}"
+          echo "## 📁 Folder Generation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Folder Name:** \`$FOLDER_NAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Gradle Task:** \`${{ github.event.inputs.gradle_task || 'generateFolder' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ✅ Completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d "$FOLDER_NAME" ]; then
+            echo "### Generated Files:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            ls -lR "$FOLDER_NAME" >> $GITHUB_STEP_SUMMARY || echo "Could not list files" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi

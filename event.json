@@ -1,0 +1,6 @@
+{
+  "inputs": {
+    "folder_name": "my-generated-folder",
+    "gradle_task": "generateFolder"
+  }
+}
