@@ -7,7 +7,8 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import com.clovis.meetme.databinding.ActivityMainBinding
+import com.clovis.second.R
+import com.clovis.second.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
