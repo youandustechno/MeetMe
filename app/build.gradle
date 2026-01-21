@@ -62,292 +62,32 @@ android {
     }
 }
 
-tasks.register("startMeetMe") {
-    println "Meet me is great $rootDir"
-    println "Meet me is great $projectDir"
-    var configFile = file("$rootDir/flavorz.json")
+// Add this to your build.gradle file
 
-    if(configFile.exists()){
-        var config =  new JsonSlurper().parseText(configFile.text)
-        if(config == null || config.toString().isEmpty()) {
-            return
-        }
-        (config["flavors"] as List<Object>)
-                .forEach { client ->
-                    println(client["appName"].toString())
-                    def currentAppName = client["appName"].toString().replaceAll(" ","")
-                    def proz = file("$rootDir/app/src/$currentAppName")
-                    if(!proz.exists()) {
-                        proz.mkdirs()
-                    }
-                }
-    }
-}
-
-// build.gradle
-task generateFolder {
-    group = 'generation'
-    description = 'Generates a new folder with basic structure'
-
+tasks.register("generateFolder") {
     doLast {
-        def folderName = project.hasProperty('folderName') ? project.property('folderName') : 'generated-output'
-        def outputDir = file(folderName)
+        // Get the folder name from command line
+        def folderName = project.findProperty('folderName') ?: 'my-folder'
 
-        // Create main folder
-        outputDir.mkdirs()
+        // Create the folder
+        def newFolder = file(folderName)
+        newFolder.mkdirs()
 
-        // Create subfolders
-        file("${outputDir}/src").mkdirs()
-        file("${outputDir}/resources").mkdirs()
-        file("${outputDir}/config").mkdirs()
-
-        // Generate README
-        file("${outputDir}/README.md").text = """
+        // Create a README inside
+        file("${newFolder}/README.md").text = """
 # ${folderName}
 
-Generated on: ${new Date()}
+This folder was created automatically!
 
-## Structure
-- src/ - Source files
-- resources/ - Resource files
-- config/ - Configuration files
+Created on: ${new Date()}
 """
 
-        // Generate config file
-        file("${outputDir}/config/settings.json").text = """{
-  "name": "${folderName}",
-  "version": "1.0.0",
-  "createdAt": "${new Date()}"
-}"""
+        // Create a simple text file
+        file("${newFolder}/info.txt").text = "Hello from ${folderName}!"
 
-        println "✅ Folder '${folderName}' generated successfully!"
-        println "Location: ${outputDir.absolutePath}"
+        println "✅ Created folder: ${folderName}"
     }
 }
-
-// Task 2: Generate Java project structure
-task generateJavaProject {
-    group = 'generation'
-    description = 'Generates a complete Java project structure'
-
-    doLast {
-        def folderName = project.hasProperty('folderName') ? project.property('folderName') : 'java-project'
-        def packageName = project.hasProperty('packageName') ? project.property('packageName') : 'com.example.app'
-        def packagePath = packageName.replace('.', '/')
-
-        def outputDir = file(folderName)
-
-        // Create standard Java project structure
-        file("${outputDir}/src/main/java/${packagePath}").mkdirs()
-        file("${outputDir}/src/main/resources").mkdirs()
-        file("${outputDir}/src/test/java/${packagePath}").mkdirs()
-        file("${outputDir}/src/test/resources").mkdirs()
-
-        // Generate Main.java
-        file("${outputDir}/src/main/java/${packagePath}/Main.java").text = """package ${packageName};
-
-public class Main {
-    public static void main(String[] args) {
-        System.out.println("Hello from ${folderName}!");
-    }
-}
-"""
-
-        // Generate build.gradle
-        file("${outputDir}/build.gradle").text = """plugins {
-    id 'java'
-    id 'application'
-}
-
-group = '${packageName}'
-version = '1.0.0'
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testImplementation 'junit:junit:4.13.2'
-}
-
-application {
-    mainClass = '${packageName}.Main'
-}
-"""
-
-        // Generate .gitignore
-        file("${outputDir}/.gitignore").text = """.gradle
-build/
-.idea/
-*.iml
-out/
-"""
-
-        println "✅ Java project '${folderName}' generated successfully!"
-    }
-}
-
-// Task 3: Generate folder from template
-task generateFromTemplate {
-    group = 'generation'
-    description = 'Generates folder structure from a template'
-
-    doLast {
-        def folderName = project.hasProperty('folderName') ? project.property('folderName') : 'template-project'
-        def templateType = project.hasProperty('templateType') ? project.property('templateType') : 'basic'
-
-        def outputDir = file(folderName)
-        outputDir.mkdirs()
-
-        switch(templateType) {
-            case 'web':
-                generateWebTemplate(outputDir, folderName)
-                break
-            case 'api':
-                generateApiTemplate(outputDir, folderName)
-                break
-            case 'basic':
-            default:
-                generateBasicTemplate(outputDir, folderName)
-                break
-        }
-
-        println "✅ Generated '${templateType}' template in '${folderName}'"
-    }
-}
-
-def generateBasicTemplate(File dir, String name) {
-    file("${dir}/docs").mkdirs()
-    file("${dir}/scripts").mkdirs()
-
-    file("${dir}/README.md").text = "# ${name}\n\nBasic project template"
-    file("${dir}/docs/SETUP.md").text = "# Setup Guide\n\nSetup instructions here"
-}
-
-def generateWebTemplate(File dir, String name) {
-    file("${dir}/public").mkdirs()
-    file("${dir}/src/components").mkdirs()
-    file("${dir}/src/styles").mkdirs()
-
-    file("${dir}/public/index.html").text = """<!DOCTYPE html>
-<html>
-<head>
-    <title>${name}</title>
-</head>
-<body>
-    <div id="app"></div>
-</body>
-</html>"""
-
-    file("${dir}/package.json").text = """{
-  "name": "${name}",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "webpack serve",
-    "build": "webpack"
-  }
-}"""
-}
-
-def generateApiTemplate(File dir, String name) {
-    file("${dir}/src/main/java/com/example/api/controller").mkdirs()
-    file("${dir}/src/main/java/com/example/api/service").mkdirs()
-    file("${dir}/src/main/java/com/example/api/model").mkdirs()
-    file("${dir}/src/main/resources").mkdirs()
-
-    file("${dir}/src/main/java/com/example/api/Application.java").text = """package com.example.api;
-
-public class Application {
-    public static void main(String[] args) {
-        System.out.println("${name} API started");
-    }
-}"""
-}
-
-// Task 4: Generate documentation structure
-task generateDocs {
-    group = 'generation'
-    description = 'Generates documentation folder structure'
-
-    doLast {
-        def folderName = project.hasProperty('folderName') ? project.property('folderName') : 'docs'
-        def outputDir = file(folderName)
-
-        // Create documentation structure
-        file("${outputDir}/api").mkdirs()
-        file("${outputDir}/guides").mkdirs()
-        file("${outputDir}/tutorials").mkdirs()
-        file("${outputDir}/images").mkdirs()
-
-        // Generate index
-        file("${outputDir}/index.md").text = """# Documentation
-
-Welcome to the documentation!
-
-## Sections
-- [API Reference](api/README.md)
-- [Guides](guides/README.md)
-- [Tutorials](tutorials/README.md)
-"""
-
-        file("${outputDir}/api/README.md").text = "# API Reference\n\nAPI documentation goes here"
-        file("${outputDir}/guides/README.md").text = "# Guides\n\nUser guides go here"
-        file("${outputDir}/tutorials/README.md").text = "# Tutorials\n\nTutorials go here"
-
-        println "✅ Documentation structure generated in '${folderName}'"
-    }
-}
-
-// Task 5: Generate with custom properties
-task generateCustom {
-    group = 'generation'
-    description = 'Generates folder with custom properties from gradle.properties or command line'
-
-    doLast {
-        def config = [
-                folderName: project.findProperty('folderName') ?: 'custom-output',
-                author: project.findProperty('author') ?: 'Unknown',
-                description: project.findProperty('description') ?: 'Generated project',
-                license: project.findProperty('license') ?: 'MIT'
-        ]
-
-        def outputDir = file(config.folderName)
-        outputDir.mkdirs()
-
-        file("${outputDir}/PROJECT.md").text = """# ${config.folderName}
-
-**Author:** ${config.author}
-**Description:** ${config.description}
-**License:** ${config.license}
-
-Generated: ${new Date()}
-"""
-
-        file("${outputDir}/LICENSE").text = """${config.license} License
-
-Copyright (c) ${Calendar.getInstance().get(Calendar.YEAR)} ${config.author}
-"""
-
-        println "✅ Custom project generated with properties:"
-        config.each { key, value -> println "  ${key}: ${value}" }
-    }
-}
-
-// Helper task to list all generation tasks
-task listGenerationTasks {
-    group = 'help'
-    description = 'Lists all available generation tasks'
-
-    doLast {
-        println "\n📋 Available Generation Tasks:\n"
-        project.tasks.findAll { it.group == 'generation' }.each { task ->
-            println "  • ${task.name}"
-            println "    ${task.description}"
-            println ""
-        }
-    }
-}
-
 dependencies {
 
     implementation libs.androidx.core.ktx
